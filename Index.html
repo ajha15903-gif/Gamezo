@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gamezo - Snake Dragon</title>
+<style>
+    body {
+        margin: 0;
+        font-family: 'Arial', sans-serif;
+        background: linear-gradient(135deg, #1f1c2c, #928dab);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        overflow: hidden;
+        color: #fff;
+    }
+    h1 {
+        margin: 10px;
+        font-size: 2.5em;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    #logo {
+        width: 50px;
+        height: 50px;
+        background: url('https://i.ibb.co/0jv8RjY/robotic-logo.png') no-repeat center/contain;
+    }
+    canvas {
+        background-color: rgba(0,0,0,0.7);
+        border: 3px solid #fff;
+        border-radius: 15px;
+    }
+    #score {
+        margin: 10px;
+        font-size: 1.5em;
+    }
+</style>
+</head>
+<body>
+<h1><div id="logo"></div> Gamezo - Snake Dragon</h1>
+<div id="score">Score: 0</div>
+<canvas id="gameCanvas" width="400" height="400"></canvas>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+const grid = 20;
+let count = 0;
+let score = 0;
+
+let snake = { x: 160, y: 160, dx: grid, dy:
