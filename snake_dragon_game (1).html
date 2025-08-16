@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gamezo - Snake Dragon</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+body {
+    margin: 0;
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(135deg, #1f1c2c, #928dab);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    overflow: hidden;
+    color: #fff;
+}
+#robotic-logo {
+    display: flex;
+    gap: 5px;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: bold;
+    font-size: 2.5em;
+    color: #00ffff;
+    text-shadow: 0 0 5px #0ff,0 0 10px #0ff,0 0 20px #0ff,0 0 40px #0ff;
+    animation: glow 1.5s infinite alternate;
+    margin: 10px;
+}
+@keyframes glow {
+    from { text-shadow:0 0 5px #0ff,0 0 10px #0ff,0 0 20px #0ff,0 0 40px #0ff;}
+    to { text-shadow:0 0 10px #0ff,0 0 20px #0ff,0 0 30px #0ff,0 0 50px #0ff;}
+}
+#score { margin: 10px; font-size: 1.5em; }
+canvas { background-color: rgba(0,0,0,0.7); border:3px solid #fff; border-radius:15px; }
+#controls { margin:10px; display:flex; gap:10px; }
+button {
+    padding:8px 15px; font-size:1em; border-radius:8px; border:none;
+    background-color:#00ffff; color:#000; cursor:pointer; font-weight:bold;
+    transition:0.2s;
+}
+button:hover { background-color:#0ff; transform: scale(1.1);}
+</style>
+</head>
+<body>
+
+<div id="robotic-logo">
+<span>G</span><span>A</span><span>M</span><span>E</span><span>Z</span><span>O</span>
+</div>
+
+<div id="score">Score: 0 | Level: 1</div>
+<canvas id="gameCanvas" width="400" height="400"></canvas>
+<div id="controls">
+    <button id="pauseBtn">Pause</button>
+    <button id="restartBtn">Restart</button>
+</div>
+
+<audio id="eatSound" src="https://www.soundjay.com/button/beep-07.wav"></audio>
+<audio id="gameOverSound" src="https://www.soundjay.com/button/beep-10.wav"></audio>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+const grid=20; let count=0; let score=0; let level=1; let speed=4; let paused=false;
+let snake={x:160,y:160,dx:grid,dy:0,cells:[],maxCells:4};
+let dragon={x:320,y:320};
+const colors=['#ff4d4d','#ffb84d','#ffff4d','#4dff4d','#4dffff','#4d4dff','#ff4dff'];
+const eatSound=document.getElementById('eatSound');
+const gameOverSound=document.getElementById('gameOverSound');
+
+function getRandomInt(min,max){return Math.floor(Math.random()*(max-min))+min;}
+function updateScore(){document.getElementById('score').innerText=`Score: ${score} | Level: ${level}`;}
+
+function gameLoop(){
+    if(paused) return requestAnimationFrame(gameLoop);
+    requestAnimationFrame(gameLoop);
+    if(++count<speed) return; count=0;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    snake.x+=snake.dx; snake.y+=snake.dy;
+
+    if(snake.x<0) snake.x=canvas.width-grid;
+    if(snake.x>=canvas.width) snake.x=0;
+    if(snake.y<0) snake.y=canvas.height-grid;
+    if(snake.y>=canvas.height) snake.y=0;
+
+    snake.cells.unshift({x:snake.x,y:snake.y});
+    if(snake.cells.length>snake.maxCells) snake.cells.pop();
+
+    ctx.fillStyle='#ff0000'; ctx.fillRect(dragon.x,dragon.y,grid-2,grid-2);
+
+    snake.cells.forEach((cell,index)=>{
+        ctx.fillStyle=colors[index%colors.length];
+        ctx.fillRect(cell.x,cell.y,grid-2,grid-2);
+
+        if(cell.x===dragon.x && cell.y===dragon.y){
+            snake.maxCells++; score+=10; eatSound.play();
+            if(score%50===0){ level++; speed=Math.max(1,speed-1);}
+            updateScore();
+            dragon.x=getRandomInt(0,20)*grid; dragon.y=getRandomInt(0,20)*grid;
+        }
+
+        for(let i=index+1;i<snake.cells.length;i++){
+            if(cell.x===snake.cells[i].x && cell.y===snake.cells[i].y){
+                gameOverSound.play();
+                snake.x=160; snake.y=160; snake.cells=[]; snake.maxCells=4;
+                snake.dx=grid; snake.dy=0; score=0; level=1; speed=4;
+                updateScore();
+            }
+        }
+    });
+}
+
+document.addEventListener('keydown',function(e){
+    if(e.key==='ArrowLeft' && snake.dx===0){snake.dx=-grid; snake.dy=0;}
+    else if(e.key==='ArrowUp' && snake.dy===0){snake.dx=0; snake.dy=-grid;}
+    else if(e.key==='ArrowRight' && snake.dx===0){snake.dx=grid; snake.dy=0;}
+    else if(e.key==='ArrowDown' && snake.dy===0){snake.dx=0; snake.dy=grid;}
+});
+
+// Mobile touch controls
+let startX,startY;
+document.addEventListener('touchstart',e=>{startX=e.touches[0].clientX; startY=e.touches[0].clientY;});
+document.addEventListener('touchend',e=>{
+    let dx=e.changedTouches[0].clientX-startX; let dy=e.changedTouches[0].clientY-startY;
+    if(Math.abs(dx)>Math.abs(dy)){
+        if(dx>0 && snake.dx===0){snake.dx=grid; snake.dy=0;}
+        else if(dx<0 && snake.dx===0){snake.dx=-grid; snake.dy=0;}
+    } else {
+        if(dy>0 && snake.dy===0){snake.dx=0; snake.dy=grid;}
+        else if(dy<0 && snake.dy===0){snake.dx=0; snake.dy=-grid;}
+    }
+});
+
+// Pause & Restart
+document.getElementById('pauseBtn').addEventListener('click',()=>{paused=!paused;});
+document.getElementById('restartBtn').addEventListener('click',()=>{
+    snake.x=160; snake.y=160; snake.cells=[]; snake.maxCells=4;
+    snake.dx=grid; snake.dy=0; score=0; level=1; speed=4; paused=false;
+    updateScore();
+});
+
+updateScore();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
